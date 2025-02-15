@@ -1,0 +1,15 @@
+seed: 42
+data:
+  data_dir: "./data"
+  flatten: False
+  batch_size: 256
+  num_workers: 8
+model:
+  linear: False
+  input_size: 784
+  hidden_layers: [300, 100]
+  num_classes: 10
+train:
+  epochs: 500
+  valid_interval: 10
+  lr: 1e-3
