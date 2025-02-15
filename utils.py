@@ -1,25 +1,56 @@
+"""
+Utility functions for setting random seeds, plotting training progress, and visualizing model performance.
+
+Author: yumemonzo@gmail.com
+Date: 2025-02-13
+"""
+
 import torch
-import seaborn as sns
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 
-def seed_everything(seed=42):
-    random.seed(seed)  # Python 기본 랜덤 시드 고정
-    torch.manual_seed(seed)  # PyTorch CPU 시드 고정
-    torch.cuda.manual_seed(seed)  # PyTorch GPU 시드 고정
+def seed_everything(seed: int = 42) -> None:
+    """
+    Set seed for reproducibility across different modules.
 
-    torch.backends.cudnn.deterministic = True  # 연산의 결정적(Deterministic) 실행 보장
-    torch.backends.cudnn.benchmark = False  # 모델 구조가 고정되지 않으면 비활성화
+    Args:
+        seed (int, optional): The seed value to use. Defaults to 42.
+    """
+    random.seed(seed)  # Python built-in random seed
+    torch.manual_seed(seed)  # PyTorch CPU seed
+    torch.cuda.manual_seed(seed)  # PyTorch GPU seed
+
+    torch.backends.cudnn.deterministic = True  # Ensures deterministic execution
+    torch.backends.cudnn.benchmark = False  # Disable if model structure is not fixed
 
 
-def plot_losses(title, train_losses, valid_losses, epochs, valid_interval, save_path):
-    plt.plot(range(epochs + 1), train_losses, label="Train Loss")  # X축: 전체 epoch
+def plot_losses(
+    title: str, 
+    train_losses: list[float], 
+    valid_losses: list[float], 
+    epochs: int, 
+    valid_interval: int, 
+    save_path: str
+) -> None:
+    """
+    Plot training and validation loss over epochs.
 
-    validation_interval = max(1, epochs // valid_interval) 
+    Args:
+        title (str): Title of the plot.
+        train_losses (list[float]): Training loss per epoch.
+        valid_losses (list[float]): Validation loss at intervals.
+        epochs (int): Number of epochs.
+        valid_interval (int): Number of validation steps.
+        save_path (str): File path to save the plot.
+    """
+    plt.plot(range(epochs + 1), train_losses, label="Train Loss")  # X-axis: epochs
+
+    validation_interval = max(1, epochs // valid_interval)
     valid_epochs = list(range(0, epochs + 1, validation_interval))
-    plt.plot(valid_epochs, valid_losses, label="Valid Loss")  # Validation이 실행된 epoch에 맞춰 X축 지정
+    plt.plot(valid_epochs, valid_losses, label="Valid Loss")  # Match validation points to epochs
 
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
@@ -29,7 +60,21 @@ def plot_losses(title, train_losses, valid_losses, epochs, valid_interval, save_
     plt.clf()
 
 
-def plot_classwise_accuracy(title, class_error_rate, class_error_rate_rotation, save_path):
+def plot_classwise_accuracy(
+    title: str, 
+    class_error_rate: np.ndarray, 
+    class_error_rate_rotation: np.ndarray, 
+    save_path: str
+) -> None:
+    """
+    Plot per-class accuracy comparison between original and rotated test sets.
+
+    Args:
+        title (str): Title of the plot.
+        class_error_rate (np.ndarray): Error rate per class (original).
+        class_error_rate_rotation (np.ndarray): Error rate per class (rotated).
+        save_path (str): File path to save the plot.
+    """
     class_accuracy = 100 - np.array(class_error_rate)
     class_accuracy_rotation = 100 - np.array(class_error_rate_rotation)
 
@@ -37,8 +82,8 @@ def plot_classwise_accuracy(title, class_error_rate, class_error_rate_rotation, 
     bar_width = 0.4
 
     plt.figure(figsize=(10, 5))
-    plt.bar(classes - bar_width/2, class_accuracy, width=bar_width, label="Original")
-    plt.bar(classes + bar_width/2, class_accuracy_rotation, width=bar_width, label="Full Rotation")
+    plt.bar(classes - bar_width / 2, class_accuracy, width=bar_width, label="Original")
+    plt.bar(classes + bar_width / 2, class_accuracy_rotation, width=bar_width, label="Full Rotation")
 
     plt.xlabel("Class")
     plt.ylabel("Accuracy (%)")
@@ -47,17 +92,32 @@ def plot_classwise_accuracy(title, class_error_rate, class_error_rate_rotation, 
     plt.ylim(0, 100)
     plt.legend()
 
+    # Annotate bars with accuracy values
     for i in range(len(classes)):
-        plt.text(classes[i] - bar_width/2, class_accuracy[i] + 1, f"{class_accuracy[i]:.2f}%", ha='center', fontsize=10)
-        plt.text(classes[i] + bar_width/2, class_accuracy_rotation[i] + 1, f"{class_accuracy_rotation[i]:.2f}%", ha='center', fontsize=10)
+        plt.text(classes[i] - bar_width / 2, class_accuracy[i] + 1, f"{class_accuracy[i]:.2f}%", ha="center", fontsize=10)
+        plt.text(classes[i] + bar_width / 2, class_accuracy_rotation[i] + 1, f"{class_accuracy_rotation[i]:.2f}%", ha="center", fontsize=10)
 
     plt.savefig(save_path)
     plt.clf()
 
 
-def plot_confusion_matrices(title, confusion_matrix, confusion_matrix_rotation, save_path):
+def plot_confusion_matrices(
+    title: str, 
+    confusion_matrix: np.ndarray, 
+    confusion_matrix_rotation: np.ndarray, 
+    save_path: str
+) -> None:
+    """
+    Plot confusion matrices for original and rotated test sets.
+
+    Args:
+        title (str): Title of the plot.
+        confusion_matrix (np.ndarray): Confusion matrix for original test set.
+        confusion_matrix_rotation (np.ndarray): Confusion matrix for rotated test set.
+        save_path (str): File path to save the plot.
+    """
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
-    fig.suptitle(title, fontsize=16, fontweight='bold')
+    fig.suptitle(title, fontsize=16, fontweight="bold")
 
     sns.heatmap(confusion_matrix, annot=True, fmt="d", cmap="Blues", ax=axes[0])
     axes[0].set_title("Original")
